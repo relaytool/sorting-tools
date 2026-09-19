@@ -743,159 +743,91 @@ function parseCodes(text) {
 
     const codes = [];
 
+    // Normalise line endings
+    const normalised = text
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n");
 
     /*
-        Normalise line endings.
+        Find each XD group.
+
+        Examples:
+
+        XD9 45,50,40
+        XD12 28
+        XD23 50,45,34
+
+        Results:
+
+        XD945
+        XD950
+        XD940
+
+        XD1228
+
+        XD2350
+        XD2345
+        XD2334
     */
 
-    const normalised =
-        text
-            .replace(/\r\n/g, "\n")
-            .replace(/\r/g, "\n");
+    const groupRegex =
+        /\b(XD\d{1,2})\b\s*([0-9,\s]+)/gi;
 
+    let match;
 
-    /*
-        Split into lines.
+    while (
+        (match = groupRegex.exec(normalised)) !== null
+    ) {
 
-        This means each XD group can
-        be entered on its own line.
-    */
+        const baseCode =
+            match[1].toUpperCase();
 
-    const lines =
-        normalised
-            .split("\n")
-            .map(line => line.trim())
-            .filter(line => line.length > 0);
-
-
-    for (const line of lines) {
+        const numberPart =
+            match[2];
 
         /*
-            Find:
+            Get the numbers after the XD base.
 
-                XD9
-                XD23
+            Example:
 
-            followed by numbers.
-
-            The XD prefix is deliberately
-            restricted to exactly XD.
+            "28"        → ["28"]
+            "45,50,40"  → ["45","50","40"]
         */
 
-        const groupRegex =
-            /\b(XD\d{1,2})\b\s*([^X]*?)(?=\bXD\d{1,2}\b|$)/gi;
+        const numbers =
+            numberPart.match(/\d+/g);
 
-
-        let match;
-
-
-        while (
-            (match = groupRegex.exec(line)) !== null
-        ) {
-
-            const baseCode =
-                match[1].toUpperCase();
-
-
-            const remaining =
-                match[2];
-
-
-            /*
-                Find all numbers after the
-                XD base code.
-
-                This handles:
-
-                    45,50,40
-                    45 50 40
-                    45, 50, 40
-            */
-
-            const numbers =
-                remaining.match(/\d+/g);
-
-
-            if (!numbers || numbers.length === 0) {
-
-                /*
-                    If there are no extra numbers,
-                    keep the base code itself.
-                */
-
-                codes.push(
-                    baseCode
-                );
-
-                continue;
-
-            }
-
-
-            /*
-                Append each number directly
-                to the XD base.
-
-                XD9 + 45 = XD945
-                XD23 + 50 = XD2350
-            */
-
-            for (const number of numbers) {
-
-                codes.push(
-                    baseCode + number
-                );
-
-            }
-
+        if (!numbers) {
+            continue;
         }
 
-    }
+        /*
+            Append each number to the XD base.
 
+            XD12 + 28 = XD1228
 
-    /*
-        Also support a simple comma-separated
-        format in case the user enters something
-        like:
+            IMPORTANT:
+            We do NOT add XD12 itself.
+        */
 
-            XD945, XD950, XD940
-    */
-
-    const directCodes =
-        text.match(
-            /\bXD\d{2,4}\b/gi
-        );
-
-
-    if (directCodes) {
-
-        for (const code of directCodes) {
-
-            /*
-                Only add if it isn't already there.
-            */
+        for (const number of numbers) {
 
             codes.push(
-                code.toUpperCase()
+                baseCode + number
             );
 
         }
 
     }
 
-
     /*
-        Remove duplicates while preserving
-        original order.
+        Remove duplicates while preserving order.
     */
 
     return [
         ...new Set(codes)
     ];
-
 }
-
-
 // ============================================================
 // FIND PAGES
 // ============================================================
