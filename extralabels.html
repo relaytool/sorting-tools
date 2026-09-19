@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+```
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>PDF Page Extractor</title>
+
+<style>
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        padding: 40px 20px;
+
+        font-family:
+            Arial,
+            Helvetica,
+            sans-serif;
+
+        background: #f5f5f5;
+        color: #222;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+
+        background: white;
+
+        padding: 30px;
+
+        border-radius: 10px;
+
+        box-shadow:
+            0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+        margin-top: 0;
+        margin-bottom: 30px;
+    }
+
+    h2 {
+        margin-top: 30px;
+    }
+
+    .section {
+        margin-bottom: 25px;
+    }
+
+    label {
+        display: block;
+
+        font-weight: bold;
+
+        margin-bottom: 8px;
+    }
+
+    input[type="file"] {
+        width: 100%;
+
+        padding: 10px;
+
+        border: 1px solid #ccc;
+
+        border-radius: 6px;
+
+        background: white;
+    }
+
+    textarea {
+        width: 100%;
+
+        min-height: 180px;
+
+        resize: vertical;
+
+        padding: 12px;
+
+        border: 1px solid #ccc;
+
+        border-radius: 6px;
+
+        font-family: monospace;
+
+        font-size: 15px;
+
+        line-height: 1.5;
+    }
+
+    textarea:focus,
+    input:focus {
+        outline: none;
+
+        border-color: #555;
+    }
+
+    .example {
+        margin-top: 8px;
+
+        color: #666;
+
+        font-size: 14px;
+
+        line-height: 1.6;
+    }
+
+    button {
+        border: none;
+
+        border-radius: 6px;
+
+        padding: 12px 20px;
+
+        font-size: 15px;
+
+        cursor: pointer;
+
+        background: #222;
+
+        color: white;
+    }
+
+    button:hover {
+        background: #444;
+    }
+
+    button:disabled {
+        background: #aaa;
+
+        cursor: not-allowed;
+    }
+
+    #status {
+        display: none;
+
+        margin-top: 20px;
+
+        padding: 12px 15px;
+
+        border-radius: 6px;
+
+        background: #f0f0f0;
+
+        font-size: 14px;
+    }
+
+    #results {
+        display: none;
+
+        margin-top: 30px;
+    }
+
+    .summary {
+        margin-bottom: 15px;
+
+        color: #555;
+    }
+
+    .copies-control {
+        display: flex;
+
+        align-items: center;
+
+        gap: 12px;
+
+        margin-bottom: 20px;
+
+        padding: 15px;
+
+        background: #f5f5f5;
+
+        border: 1px solid #ddd;
+
+        border-radius: 8px;
+    }
+
+    .copies-control label {
+        margin: 0;
+    }
+
+    #globalCopies {
+        width: 90px;
+
+        padding: 8px 10px;
+
+        border: 1px solid #bbb;
+
+        border-radius: 5px;
+
+        font-size: 16px;
+
+        font-weight: bold;
+    }
+
+    .copies-help {
+        color: #666;
+
+        font-size: 14px;
+    }
+
+    table {
+        width: 100%;
+
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        padding: 12px;
+
+        border: 1px solid #ddd;
+
+        text-align: left;
+    }
+
+    th {
+        background: #f0f0f0;
+    }
+
+    .found {
+        color: green;
+
+        font-weight: bold;
+    }
+
+    .not-found {
+        color: red;
+
+        font-weight: bold;
+    }
+
+    .warning {
+        margin-top: 20px;
+
+        padding: 12px;
+
+        background: #fff5d6;
+
+        border: 1px solid #e7cf78;
+
+        border-radius: 6px;
+
+        color: #665500;
+    }
+
+    #generateButton {
+        margin-top: 20px;
+    }
+
+    .file-name {
+        margin-top: 8px;
+
+        color: #666;
+
+        font-size: 14px;
+
+        line-height: 1.5;
+    }
+
+    .file-list {
+        margin-top: 10px;
+
+        padding: 10px;
+
+        background: #f7f7f7;
+
+        border-radius: 6px;
+
+        font-size: 14px;
+
+        color: #555;
+    }
+
+    .file-list div {
+        padding: 3px 0;
+    }
+
+</style>
+```
+
+</head>
+
+<body>
+
+<div class="container">
+
+```
+<h1>Reprint Extra Labels Tool</h1>
+
+<p>
+    <i>
+        Usage: Generate all the Aisle labels from the Sortal.
+        Upload one or more PDFs here, enter the labels,
+        search for them, and generate a PDF containing
+        the matching pages.
+    </i>
+</p>
+
+
+<!-- ========================= -->
+<!-- PDF SELECTION -->
+<!-- ========================= -->
+
+<div class="section">
+
+    <label for="pdfFile">
+        Select PDF(s)
+    </label>
+
+    <input
+        type="file"
+        id="pdfFile"
+        accept=".pdf,application/pdf"
+        multiple
+    >
+
+    <div
+        id="fileName"
+        class="file-name"
+    ></div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- CODE INPUT -->
+<!-- ========================= -->
+
+<div class="section">
+
+    <label for="codes">
+        Enter Codes
+    </label>
+
+    <textarea
+        id="codes"
+        placeholder="XD9 45,50,40
+```
+
+XD23 50,45,34
+
+XD15 60,65,70"
+></textarea>
+
+```
+    <div class="example">
+
+        <strong>Example:</strong>
+
+        <br>
+
+        <code>
+            XD9 45,50,40
+        </code>
+
+        becomes:
+
+        <br>
+
+        <code>
+            XD945, XD950, XD940
+        </code>
+
+        <br><br>
+
+        <code>
+            XD23 50,45,34
+        </code>
+
+        becomes:
+
+        <br>
+
+        <code>
+            XD2350, XD2345, XD2334
+        </code>
+
+        <br><br>
+
+        You can enter multiple XD groups on separate lines.
+
+    </div>
+
+</div>
+
+
+<button id="findButton">
+    Find Pages
+</button>
+
+
+<div id="status"></div>
+
+
+<!-- ========================= -->
+<!-- RESULTS -->
+<!-- ========================= -->
+
+<div id="results">
+
+    <h2>Results</h2>
+
+    <div
+        id="summary"
+        class="summary"
+    ></div>
+
+
+    <!-- ========================= -->
+    <!-- GLOBAL COPIES -->
+    <!-- ========================= -->
+
+    <div class="copies-control">
+
+        <label for="globalCopies">
+            Number of Copies:
+        </label>
+
+        <input
+            type="number"
+            id="globalCopies"
+            min="1"
+            step="1"
+            value="1"
+        >
+
+        <span class="copies-help">
+            This number will be applied to every page found.
+        </span>
+
+    </div>
+
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    Code
+                </th>
+
+                <th>
+                    PDF
+                </th>
+
+                <th>
+                    Page
+                </th>
+
+                <th>
+                    Status
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody
+            id="resultsBody"
+        ></tbody>
+
+    </table>
+
+
+    <div
+        id="notFoundWarning"
+        class="warning"
+        style="display:none"
+    ></div>
+
+
+    <button
+        id="generateButton"
+    >
+        Generate PDF
+    </button>
+
+</div>
+```
+
+</div>
+
+<!-- ========================= -->
+
+<!-- PDF-LIB -->
+
+<!-- ========================= -->
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js">
+</script>
+
+<!-- ========================= -->
+
+<!-- PDF.JS -->
+
+<!-- ========================= -->
+
+<script type="module">
+
+import * as pdfjsLib from
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs";
+
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
+
+
+// ============================================================
+// GET UI ELEMENTS
+// ============================================================
+
+const pdfFileInput =
+    document.getElementById("pdfFile");
+
+const codesInput =
+    document.getElementById("codes");
+
+const findButton =
+    document.getElementById("findButton");
+
+const generateButton =
+    document.getElementById("generateButton");
+
+const globalCopiesInput =
+    document.getElementById("globalCopies");
+
+const status =
+    document.getElementById("status");
+
+const results =
+    document.getElementById("results");
+
+const resultsBody =
+    document.getElementById("resultsBody");
+
+const summary =
+    document.getElementById("summary");
+
+const notFoundWarning =
+    document.getElementById("notFoundWarning");
+
+const fileName =
+    document.getElementById("fileName");
+
+
+// ============================================================
+// STORAGE
+// ============================================================
+
+/*
+    Each selected PDF is stored separately.
+
+    Example:
+
+    sourcePdfs = [
+        {
+            name: "sortal-1.pdf",
+            bytes: Uint8Array(...)
+        },
+        {
+            name: "sortal-2.pdf",
+            bytes: Uint8Array(...)
+        }
+    ]
+*/
+
+let sourcePdfs = [];
+
+
+/*
+    Results:
+
+    {
+        code: "XD945",
+        fileIndex: 0,
+        fileName: "sortal-1.pdf",
+        page: 5
+    }
+*/
+
+let foundPages = [];
+
+
+/*
+    Codes requested by user.
+*/
+
+let requestedCodes = [];
+
+
+// ============================================================
+// STATUS
+// ============================================================
+
+function showStatus(message) {
+
+    status.style.display = "block";
+
+    status.textContent = message;
+
+}
+
+
+// ============================================================
+// FILE SELECTION
+// ============================================================
+
+pdfFileInput.addEventListener(
+    "change",
+    () => {
+
+        sourcePdfs = [];
+
+        if (
+            pdfFileInput.files &&
+            pdfFileInput.files.length > 0
+        ) {
+
+            const files =
+                Array.from(pdfFileInput.files);
+
+            fileName.innerHTML = "";
+
+            const heading =
+                document.createElement("strong");
+
+            heading.textContent =
+                `${files.length} PDF${files.length === 1 ? "" : "s"} selected:`;
+
+            fileName.appendChild(
+                heading
+            );
+
+
+            const fileList =
+                document.createElement("div");
+
+            fileList.className =
+                "file-list";
+
+
+            files.forEach(
+                file => {
+
+                    const div =
+                        document.createElement("div");
+
+                    div.textContent =
+                        `• ${file.name}`;
+
+                    fileList.appendChild(
+                        div
+                    );
+
+                }
+            );
+
+
+            fileName.appendChild(
+                fileList
+            );
+
+        } else {
+
+            fileName.textContent = "";
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// ESCAPE REGEX
+// ============================================================
+
+function escapeRegex(value) {
+
+    return value.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+    );
+
+}
+
+
+// ============================================================
+// PARSE CODES
+// ============================================================
+
+/*
+    New format:
+
+        XD9 45,50,40
+
+    becomes:
+
+        XD945
+        XD950
+        XD940
+
+
+    And:
+
+        XD23 50,45,34
+
+    becomes:
+
+        XD2350
+        XD2345
+        XD2334
+
+
+    The parser looks for:
+
+        XD + 1 or 2 digits
+
+    followed by one or more numbers.
+
+    It also accepts commas and spaces.
+
+    A new XD starts a new group.
+*/
+
+
+function parseCodes(text) {
+
+    const codes = [];
+
+
+    /*
+        Normalise line endings.
+    */
+
+    const normalised =
+        text
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n");
+
+
+    /*
+        Split into lines.
+
+        This means each XD group can
+        be entered on its own line.
+    */
+
+    const lines =
+        normalised
+            .split("\n")
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+
+
+    for (const line of lines) {
+
+        /*
+            Find:
+
+                XD9
+                XD23
+
+            followed by numbers.
+
+            The XD prefix is deliberately
+            restricted to exactly XD.
+        */
+
+        const groupRegex =
+            /\b(XD\d{1,2})\b\s*([^X]*?)(?=\bXD\d{1,2}\b|$)/gi;
+
+
+        let match;
+
+
+        while (
+            (match = groupRegex.exec(line)) !== null
+        ) {
+
+            const baseCode =
+                match[1].toUpperCase();
+
+
+            const remaining =
+                match[2];
+
+
+            /*
+                Find all numbers after the
+                XD base code.
+
+                This handles:
+
+                    45,50,40
+                    45 50 40
+                    45, 50, 40
+            */
+
+            const numbers =
+                remaining.match(/\d+/g);
+
+
+            if (!numbers || numbers.length === 0) {
+
+                /*
+                    If there are no extra numbers,
+                    keep the base code itself.
+                */
+
+                codes.push(
+                    baseCode
+                );
+
+                continue;
+
+            }
+
+
+            /*
+                Append each number directly
+                to the XD base.
+
+                XD9 + 45 = XD945
+                XD23 + 50 = XD2350
+            */
+
+            for (const number of numbers) {
+
+                codes.push(
+                    baseCode + number
+                );
+
+            }
+
+        }
+
+    }
+
+
+    /*
+        Also support a simple comma-separated
+        format in case the user enters something
+        like:
+
+            XD945, XD950, XD940
+    */
+
+    const directCodes =
+        text.match(
+            /\bXD\d{2,4}\b/gi
+        );
+
+
+    if (directCodes) {
+
+        for (const code of directCodes) {
+
+            /*
+                Only add if it isn't already there.
+            */
+
+            codes.push(
+                code.toUpperCase()
+            );
+
+        }
+
+    }
+
+
+    /*
+        Remove duplicates while preserving
+        original order.
+    */
+
+    return [
+        ...new Set(codes)
+    ];
+
+}
+
+
+// ============================================================
+// FIND PAGES
+// ============================================================
+
+findButton.addEventListener(
+    "click",
+    async () => {
+
+        try {
+
+            // ------------------------------------------------
+            // VALIDATE PDF
+            // ------------------------------------------------
+
+            if (
+                !pdfFileInput.files ||
+                pdfFileInput.files.length === 0
+            ) {
+
+                alert(
+                    "Please select at least one PDF."
+                );
+
+                return;
+
+            }
+
+
+            // ------------------------------------------------
+            // PARSE CODES
+            // ------------------------------------------------
+
+            requestedCodes =
+                parseCodes(
+                    codesInput.value
+                );
+
+
+            if (
+                requestedCodes.length === 0
+            ) {
+
+                alert(
+                    "Please enter at least one valid XD code."
+                );
+
+                return;
+
+            }
+
+
+            // ------------------------------------------------
+            // DISABLE BUTTONS
+            // ------------------------------------------------
+
+            findButton.disabled =
+                true;
+
+            generateButton.disabled =
+                true;
+
+
+            // ------------------------------------------------
+            // RESET
+            // ------------------------------------------------
+
+            sourcePdfs = [];
+
+            foundPages = [];
+
+            resultsBody.innerHTML = "";
+
+            results.style.display =
+                "none";
+
+
+            // ------------------------------------------------
+            // READ ALL PDFS
+            // ------------------------------------------------
+
+            const files =
+                Array.from(
+                    pdfFileInput.files
+                );
+
+
+            showStatus(
+                `Reading ${files.length} PDF${files.length === 1 ? "" : "s"}...`
+            );
+
+
+            for (
+                let fileIndex = 0;
+                fileIndex < files.length;
+                fileIndex++
+            ) {
+
+                const file =
+                    files[fileIndex];
+
+
+                showStatus(
+                    `Loading PDF ${fileIndex + 1} of ${files.length}: ${file.name}`
+                );
+
+
+                const arrayBuffer =
+                    await file.arrayBuffer();
+
+
+                const bytes =
+                    new Uint8Array(
+                        arrayBuffer
+                    );
+
+
+                sourcePdfs.push({
+
+                    name:
+                        file.name,
+
+                    bytes:
+                        bytes
+
+                });
+
+            }
+
+
+            // ------------------------------------------------
+            // SEARCH ALL PDFS
+            // ------------------------------------------------
+
+            for (
+                let fileIndex = 0;
+                fileIndex < sourcePdfs.length;
+                fileIndex++
+            ) {
+
+                const source =
+                    sourcePdfs[fileIndex];
+
+
+                showStatus(
+                    `Searching ${source.name}...`
+                );
+
+
+                /*
+                    PDF.js must receive its own
+                    copy of the bytes.
+                */
+
+                const pdfJsBytes =
+                    source.bytes.slice();
+
+
+                const pdf =
+                    await pdfjsLib.getDocument({
+                        data: pdfJsBytes
+                    }).promise;
+
+
+                // --------------------------------------------
+                // SEARCH EVERY PAGE
+                // --------------------------------------------
+
+                for (
+                    let pageNumber = 1;
+                    pageNumber <= pdf.numPages;
+                    pageNumber++
+                ) {
+
+                    const page =
+                        await pdf.getPage(
+                            pageNumber
+                        );
+
+
+                    const textContent =
+                        await page.getTextContent();
+
+
+                    const pageText =
+                        textContent.items
+                            .map(
+                                item => item.str
+                            )
+                            .join(" ");
+
+
+                    // ----------------------------------------
+                    // CHECK EVERY REQUESTED CODE
+                    // ----------------------------------------
+
+                    for (
+                        const code of requestedCodes
+                    ) {
+
+                        /*
+                            Don't search again if this
+                            code has already been found
+                            in an earlier PDF/page.
+                        */
+
+                        const alreadyFound =
+                            foundPages.some(
+                                item =>
+                                    item.code === code
+                            );
+
+
+                        if (alreadyFound) {
+
+                            continue;
+
+                        }
+
+
+                        /*
+                            Exact code search.
+
+                            Case insensitive.
+                        */
+
+                        const regex =
+                            new RegExp(
+                                escapeRegex(code),
+                                "i"
+                            );
+
+
+                        if (
+                            regex.test(pageText)
+                        ) {
+
+                            foundPages.push({
+
+                                code:
+                                    code,
+
+                                fileIndex:
+                                    fileIndex,
+
+                                fileName:
+                                    source.name,
+
+                                page:
+                                    pageNumber
+
+                            });
+
+                        }
+
+                    }
+
+
+                    showStatus(
+                        `Searching ${source.name} — page ${pageNumber} of ${pdf.numPages}...`
+                    );
+
+
+                    /*
+                        Stop processing this PDF early
+                        if every requested code has been
+                        found.
+                    */
+
+                    if (
+                        foundPages.length ===
+                        requestedCodes.length
+                    ) {
+
+                        break;
+
+                    }
+
+                }
+
+
+                /*
+                    Stop processing additional PDFs
+                    if everything has already been found.
+                */
+
+                if (
+                    foundPages.length ===
+                    requestedCodes.length
+                ) {
+
+                    break;
+
+                }
+
+            }
+
+
+            // ------------------------------------------------
+            // SORT RESULTS
+            // ------------------------------------------------
+
+            /*
+                Keep exactly the same order as
+                requested by the user.
+            */
+
+            foundPages.sort(
+                (a, b) =>
+                    requestedCodes.indexOf(a.code) -
+                    requestedCodes.indexOf(b.code)
+            );
+
+
+            // ------------------------------------------------
+            // DISPLAY RESULTS
+            // ------------------------------------------------
+
+            displayResults();
+
+
+            // ------------------------------------------------
+            // SUMMARY
+            // ------------------------------------------------
+
+            const foundCount =
+                foundPages.length;
+
+
+            const missingCount =
+                requestedCodes.length -
+                foundCount;
+
+
+            showStatus(
+                `Search complete. Found ${foundCount} of ${requestedCodes.length} labels.`
+            );
+
+
+            findButton.disabled =
+                false;
+
+
+            generateButton.disabled =
+                foundPages.length === 0;
+
+
+        } catch (error) {
+
+            console.error(
+                "Search error:",
+                error
+            );
+
+
+            showStatus(
+                "Error searching PDF: " +
+                error.message
+            );
+
+
+            findButton.disabled =
+                false;
+
+
+            generateButton.disabled =
+                false;
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// DISPLAY RESULTS
+// ============================================================
+
+function displayResults() {
+
+    resultsBody.innerHTML = "";
+
+
+    /*
+        Create a map of found results.
+    */
+
+    const foundMap =
+        new Map(
+            foundPages.map(
+                item => [
+                    item.code,
+                    item
+                ]
+            )
+        );
+
+
+    /*
+        Display every requested code
+        in the original order.
+    */
+
+    for (
+        const code of requestedCodes
+    ) {
+
+        const result =
+            foundMap.get(code);
+
+
+        const row =
+            document.createElement("tr");
+
+
+        // --------------------------------------------
+        // CODE
+        // --------------------------------------------
+
+        const codeCell =
+            document.createElement("td");
+
+
+        codeCell.textContent =
+            code;
+
+
+        // --------------------------------------------
+        // PDF
+        // --------------------------------------------
+
+        const fileCell =
+            document.createElement("td");
+
+
+        // --------------------------------------------
+        // PAGE
+        // --------------------------------------------
+
+        const pageCell =
+            document.createElement("td");
+
+
+        // --------------------------------------------
+        // STATUS
+        // --------------------------------------------
+
+        const statusCell =
+            document.createElement("td");
+
+
+        if (result) {
+
+            fileCell.textContent =
+                result.fileName;
+
+
+            pageCell.textContent =
+                result.page;
+
+
+            statusCell.textContent =
+                "Found";
+
+
+            statusCell.className =
+                "found";
+
+        } else {
+
+            fileCell.textContent =
+                "-";
+
+
+            pageCell.textContent =
+                "-";
+
+
+            statusCell.textContent =
+                "Not found";
+
+
+            statusCell.className =
+                "not-found";
+
+        }
+
+
+        row.appendChild(
+            codeCell
+        );
+
+
+        row.appendChild(
+            fileCell
+        );
+
+
+        row.appendChild(
+            pageCell
+        );
+
+
+        row.appendChild(
+            statusCell
+        );
+
+
+        resultsBody.appendChild(
+            row
+        );
+
+    }
+
+
+    // ========================================================
+    // SUMMARY
+    // ========================================================
+
+    const foundCount =
+        foundPages.length;
+
+
+    const missingCount =
+        requestedCodes.length -
+        foundCount;
+
+
+    summary.textContent =
+        `Found ${foundCount} of ${requestedCodes.length} requested labels.`;
+
+
+    // ========================================================
+    // MISSING WARNING
+    // ========================================================
+
+    if (
+        missingCount > 0
+    ) {
+
+        notFoundWarning.style.display =
+            "block";
+
+
+        const missingCodes =
+            requestedCodes.filter(
+                code =>
+                    !foundPages.some(
+                        item =>
+                            item.code === code
+                    )
+            );
+
+
+        notFoundWarning.textContent =
+            "The following labels were not found: " +
+            missingCodes.join(", ");
+
+    } else {
+
+        notFoundWarning.style.display =
+            "none";
+
+    }
+
+
+    // ========================================================
+    // SHOW RESULTS
+    // ========================================================
+
+    results.style.display =
+        "block";
+
+}
+
+
+// ============================================================
+// GLOBAL COPIES INPUT
+// ============================================================
+
+globalCopiesInput.addEventListener(
+    "input",
+    () => {
+
+        let value =
+            parseInt(
+                globalCopiesInput.value,
+                10
+            );
+
+
+        if (
+            !Number.isInteger(value) ||
+            value < 1
+        ) {
+
+            value = 1;
+
+        }
+
+
+        globalCopiesInput.value =
+            value;
+
+    }
+);
+
+
+// ============================================================
+// GENERATE PDF
+// ============================================================
+
+generateButton.addEventListener(
+    "click",
+    async () => {
+
+        try {
+
+            // ------------------------------------------------
+            // VALIDATE
+            // ------------------------------------------------
+
+            if (
+                sourcePdfs.length === 0
+            ) {
+
+                alert(
+                    "Please select and search PDF(s) first."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                foundPages.length === 0
+            ) {
+
+                alert(
+                    "No matching pages were found."
+                );
+
+                return;
+
+            }
+
+
+            // ------------------------------------------------
+            // GET GLOBAL COPIES
+            // ------------------------------------------------
+
+            let copies =
+                parseInt(
+                    globalCopiesInput.value,
+                    10
+                );
+
+
+            if (
+                !Number.isInteger(copies) ||
+                copies < 1
+            ) {
+
+                copies = 1;
+
+                globalCopiesInput.value =
+                    "1";
+
+            }
+
+
+            // ------------------------------------------------
+            // DISABLE BUTTONS
+            // ------------------------------------------------
+
+            generateButton.disabled =
+                true;
+
+            findButton.disabled =
+                true;
+
+
+            showStatus(
+                "Creating output PDF..."
+            );
+
+
+            // ------------------------------------------------
+            // CREATE OUTPUT PDF
+            // ------------------------------------------------
+
+            const outputPdf =
+                await PDFLib.PDFDocument.create();
+
+
+            let outputPageCount =
+                0;
+
+
+            // ------------------------------------------------
+            // PROCESS FOUND PAGES
+            // ------------------------------------------------
+
+            for (
+                const item of foundPages
+            ) {
+
+                /*
+                    Get the correct source PDF.
+                */
+
+                const source =
+                    sourcePdfs[
+                        item.fileIndex
+                    ];
+
+
+                /*
+                    PDF-lib gets its own copy.
+                */
+
+                const pdfLibBytes =
+                    source.bytes.slice();
+
+
+                const sourcePdf =
+                    await PDFLib.PDFDocument.load(
+                        pdfLibBytes
+                    );
+
+
+                /*
+                    pdf-lib pages are zero-indexed.
+                */
+
+                const pageIndex =
+                    item.page - 1;
+
+
+                // --------------------------------------------
+                // ADD GLOBAL NUMBER OF COPIES
+                // --------------------------------------------
+
+                for (
+                    let copy = 0;
+                    copy < copies;
+                    copy++
+                ) {
+
+                    const copiedPages =
+                        await outputPdf.copyPages(
+                            sourcePdf,
+                            [pageIndex]
+                        );
+
+
+                    outputPdf.addPage(
+                        copiedPages[0]
+                    );
+
+
+                    outputPageCount++;
+
+
+                    showStatus(
+                        `Creating output PDF... ${outputPageCount} pages`
+                    );
+
+                }
+
+            }
+
+
+            // ------------------------------------------------
+            // SAVE
+            // ------------------------------------------------
+
+            showStatus(
+                "Saving PDF..."
+            );
+
+
+            const outputBytes =
+                await outputPdf.save();
+
+
+            // ------------------------------------------------
+            // CREATE BLOB
+            // ------------------------------------------------
+
+            const blob =
+                new Blob(
+                    [outputBytes],
+                    {
+                        type:
+                            "application/pdf"
+                    }
+                );
+
+
+            // ------------------------------------------------
+            // DOWNLOAD
+            // ------------------------------------------------
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            const link =
+                document.createElement("a");
+
+
+            link.href =
+                url;
+
+
+            link.download =
+                "extracted-pages.pdf";
+
+
+            document.body.appendChild(
+                link
+            );
+
+
+            link.click();
+
+
+            link.remove();
+
+
+            setTimeout(
+                () => {
+
+                    URL.revokeObjectURL(
+                        url
+                    );
+
+                },
+                1000
+            );
+
+
+            // ------------------------------------------------
+            // COMPLETE
+            // ------------------------------------------------
+
+            showStatus(
+                `PDF generated successfully. ${outputPageCount} pages created (${copies} copy/copies of ${foundPages.length} labels).`
+            );
+
+
+            generateButton.disabled =
+                false;
+
+
+            findButton.disabled =
+                false;
+
+
+        } catch (error) {
+
+            console.error(
+                "PDF generation error:",
+                error
+            );
+
+
+            showStatus(
+                "Error creating PDF: " +
+                error.message
+            );
+
+
+            generateButton.disabled =
+                false;
+
+
+            findButton.disabled =
+                false;
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+
+</html>
