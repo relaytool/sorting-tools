@@ -1,0 +1,11 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": true,
+    "requests": {
+      "$requestId": {
+        ".validate": "newData.hasChildren(['code', 'station', 'status', 'createdAt']) && newData.child('code').isString() && newData.child('station').isString() && newData.child('status').isString()"
+      }
+    }
+  }
+}
